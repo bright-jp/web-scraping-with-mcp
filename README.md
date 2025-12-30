@@ -1,93 +1,93 @@
-# Web Scraping with Anthropic’s MCP
+# AnthropicのMCPによるWebスクレイピング
 
-[![Bright Data Promo](https://github.com/luminati-io/LinkedIn-Scraper/raw/main/Proxies%20and%20scrapers%20GitHub%20bonus%20banner.png)](https://brightdata.com/)
+[![Bright Data Promo](https://github.com/luminati-io/LinkedIn-Scraper/raw/main/Proxies%20and%20scrapers%20GitHub%20bonus%20banner.png)](https://brightdata.jp/)
 
-This guide explains how to set up an MCP server for on-demand data extraction, connect with development tools, and leverage Bright Data for instant AI-compatible web information.
+このガイドでは、オンデマンドのデータ抽出のためにMCPサーバーをセットアップし、開発ツールと接続し、Bright Dataを活用してAI互換のWeb情報を即座に取得する方法を説明します。
 
-- [Understanding the Limitation: Why LLMs Need Help with Real-World Interaction](#understanding-the-limitation-why-llms-need-help-with-real-world-interaction)
-- [The Importance of MCP](#the-importance-of-mcp)
-- [Understanding Model Context Protocol](#understanding-model-context-protocol)
-- [MCP Architecture Explained](#mcp-architecture-explained)
-- [Developing Your Own MCP Server](#developing-your-own-mcp-server)
-- [Connecting Your MCP Server](#connecting-your-mcp-server)
-- [Using Bright Data's MCP for Professional Web Data Extraction](#using-bright-datas-mcp-for-professional-web-data-extraction)
-- [Further Reading](#further-reading)
+- [制約の理解：なぜLLMは現実世界との相互作用に支援が必要なのか](#understanding-the-limitation-why-llms-need-help-with-real-world-interaction)
+- [MCPの重要性](#the-importance-of-mcp)
+- [Model Context Protocolの理解](#understanding-model-context-protocol)
+- [MCPアーキテクチャの解説](#mcp-architecture-explained)
+- [独自のMCPサーバーを開発する](#developing-your-own-mcp-server)
+- [MCPサーバーを接続する](#connecting-your-mcp-server)
+- [プロフェッショナルなWebデータ抽出のためにBright DataのMCPを使う](#using-bright-datas-mcp-for-professional-web-data-extraction)
+- [参考資料](#further-reading)
 
 ## Understanding the Limitation: Why LLMs Need Help with Real-World Interaction
 
-Large Language Models (LLMs) excel at processing and generating text from extensive training datasets. However, they face a critical constraint—they cannot naturally interact with the external world. This means they lack built-in capabilities to access local files, execute custom scripts, or retrieve current information from websites.
+Large Language Models（LLM）は、広範な学習データセットからテキストを処理・生成することに優れています。しかし、重大な制約があります。それは、外部世界と自然に相互作用できないことです。つまり、ローカルファイルへのアクセス、カスタムスクリプトの実行、Webサイトから最新情報を取得するといった機能が標準では備わっていません。
 
-Consider a basic example: asking Claude to extract details from an active Amazon product page is impossible without additional tools. Why? Because it doesn't have the inherent capability to browse the internet or trigger external actions.
+基本的な例として、Claudeに稼働中のAmazon商品ページから詳細を抽出するよう依頼しても、追加ツールなしでは不可能です。なぜでしょうか。インターネットを閲覧したり外部アクションをトリガーしたりする固有の能力がないためです。
 
 ![claude-without-mcp](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/claude-without-mcp.png)
 
-Without supplementary tooling, LLMs cannot perform practical tasks that depend on real-time data or integration with external systems.
+補助ツールがなければ、LLMはリアルタイムデータや外部システムとの統合に依存する実用的なタスクを実行できません。
 
-This is where [Anthropic's Model Context Protocol (MCP)](https://www.anthropic.com/news/model-context-protocol) becomes valuable. It enables LLMs to communicate with external tools—like data extractors, APIs, or scripts—in a secure and standardized manner.
+そこで価値を発揮するのが、[AnthropicのModel Context Protocol（MCP）](https://www.anthropic.com/news/model-context-protocol)です。MCPは、データ抽出ツール、API、スクリプトなどの外部ツールと、LLMが安全かつ標準化された方法で通信できるようにします。
 
-Here's the difference in action. After integrating a custom MCP server, we successfully extracted structured Amazon product information directly through Claude:
+実際の違いは次のとおりです。カスタムMCPサーバーを統合した後、Claudeから直接、構造化されたAmazon商品情報を抽出することに成功しました。
 
 ![claude-amazon-product-data-extraction-results](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/claude-amazon-product-data-extraction-results.png)
 
 ## The Importance of MCP
 
-- **Standardization:** MCP provides a uniform interface for LLM-based systems to connect with external tools and data—similar to how APIs standardized web integrations. This significantly reduces the need for custom integrations, accelerating development.
-- **Flexibility and Scalability:** Developers can replace LLMs or hosting platforms without rewriting tool integrations. MCP supports multiple communication methods (such as `stdio`), making it adaptable to various configurations.
-- **Enhanced LLM Capabilities:** By connecting LLMs to current data and external tools, MCP allows them to go beyond static responses. They can now deliver up-to-date, relevant information and trigger real-world actions based on context.
+- **標準化:** MCPは、LLMベースのシステムが外部ツールやデータに接続するための統一インターフェースを提供します。Web統合をAPIが標準化したのと同様です。これによりカスタム統合の必要性が大幅に減り、開発が加速します。
+- **柔軟性とスケーラビリティ:** 開発者は、LLMやホスティングプラットフォームを置き換えても、ツール統合を書き直す必要がありません。MCPは`stdio`など複数の通信方式をサポートしており、さまざまな構成に適応できます。
+- **LLM機能の強化:** MCPでLLMを最新データや外部ツールに接続することで、静的な回答を超えられます。文脈に基づいて最新で関連性の高い情報を提供し、現実世界のアクションをトリガーできるようになります。
 
-> **Analogy**:
+> **たとえ話**:
 > 
-> Think of MCP as a USB interface for LLMs. Just like USB allows different devices (keyboards, printers, external drives) to plug into any compatible machine without needing special drivers, MCP lets LLMs connect to a wide range of tools using a standardized protocol—no need for custom integration each time.
+> MCPはLLMのためのUSBインターフェースだと考えてください。USBが（キーボード、プリンター、外付けドライブなどの）異なるデバイスを特別なドライバーなしで互換マシンに接続できるようにするのと同様に、MCPは標準化されたプロトコルを用いてLLMを幅広いツールに接続できます。毎回カスタム統合を行う必要はありません。
 
 ## Understanding Model Context Protocol
 
-Model Context Protocol (MCP) is an open standard developed by Anthropic that enables large language models (LLMs) to interact with external tools, APIs, and data sources in a consistent, secure way. It functions as a universal connector, allowing LLMs to perform real-world tasks like extracting website data, querying databases, or executing scripts.
+Model Context Protocol（MCP）は、Anthropicが開発したオープンスタンダードで、大規模言語モデル（LLM）が外部ツール、API、データソースと一貫性があり安全な方法で相互作用できるようにします。ユニバーサルコネクターとして機能し、Webサイトデータの抽出、データベースのクエリ、スクリプトの実行といった現実世界のタスクをLLMが行えるようにします。
 
-While Anthropic introduced it, MCP is open and extensible, meaning anyone can implement or contribute to the standard. If you've worked with [Retrieval-Augmented Generation (RAG)](https://brightdata.com/blog/web-data/rag-explained), you'll appreciate the concept. MCP builds on that idea by standardizing interactions through a lightweight JSON-RPC interface so models can access live data and take action.
+Anthropicが導入したものですが、MCPはオープンかつ拡張可能であり、誰でも標準を実装・貢献できます。[Retrieval-Augmented Generation（RAG）](https://brightdata.jp/blog/web-data/rag-explained)を扱ったことがある方なら、この概念を理解しやすいはずです。MCPはそのアイデアを発展させ、軽量なJSON-RPCインターフェースによって相互作用を標準化し、モデルがライブデータへアクセスしてアクションを実行できるようにします。
 
 ## MCP Architecture Explained
 
-At its foundation, MCP standardizes communication between an AI model and external capabilities.
+MCPの基盤は、AIモデルと外部機能の間の通信を標準化することにあります。
 
-**Core Idea:** A standardized interface (usually JSON-RPC 2.0 over transports like `stdio`) allows an LLM (via a client) to discover and invoke tools exposed by external servers.
+**中核のアイデア:** 標準化されたインターフェース（通常は`stdio`のようなトランスポート上のJSON-RPC 2.0）により、LLM（クライアント経由）は外部サーバーが公開するツールを発見し、呼び出せるようになります。
 
-MCP operates through a client-server architecture with three key components:
+MCPはクライアント/サーバーアーキテクチャで動作し、主要コンポーネントは3つです。
 
-1. **MCP Host**: The environment or application that initiates and manages interactions between the LLM and external tools. Examples include AI assistants like _Claude Desktop_ or IDEs like _Cursor_.
-2. **MCP Client**: A component within the host that establishes and maintains connections with MCP Servers, handling the communication protocols and managing data exchange.
-3. **MCP Server:** A program (which we developers create) that implements the MCP protocol and exposes a specific set of capabilities. An MCP server might interface with a database, a web service, or, in our case, a website (Amazon). Servers expose their functionality in standardized ways:
-   - **Tools:** Callable functions (e.g. _scrape\_amazon\_product_, _get\_weather\_data_)
-   - **Resources:** Read-only endpoints for retrieving static data (e.g. fetch a file, return a JSON record)
-   - **Prompts:** Predefined templates to guide LLM interaction with tools and resources
+1. **MCP Host**: LLMと外部ツール間の相互作用を開始・管理する環境またはアプリケーションです。例として、_Claude Desktop_のようなAIアシスタントや、_Cursor_のようなIDEがあります。
+2. **MCP Client**: host内のコンポーネントで、MCP Serverへの接続を確立・維持し、通信プロトコルを処理してデータ交換を管理します。
+3. **MCP Server:** （開発者である私たちが作成する）MCPプロトコルを実装し、特定の機能セットを公開するプログラムです。MCP serverはデータベース、Webサービス、またはこのケースではWebサイト（Amazon）と連携できます。serverは機能を標準化された形で公開します:
+   - **Tools:** 呼び出し可能な関数（例: _scrape\_amazon\_product_, _get\_weather\_data_）
+   - **Resources:** 静的データを取得するための読み取り専用エンドポイント（例: ファイル取得、JSONレコードの返却）
+   - **Prompts:** LLMがtoolsやresourcesとやり取りする際のガイドとなる事前定義テンプレート
 
-Here's the MCP architecture diagram:
+MCPアーキテクチャ図はこちらです。
 
 ![mcp-architecture-diagram-host-client-server-connections](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/mcp-architecture-diagram-host-client-server-connections.png)
 
 _Image Source: [Model Context Protocol](https://modelcontextprotocol.io/introduction)_
 
-In this setup, the **host** (Claude Desktop or Cursor IDE) spawns an **MCP client**, which then connects to an external **MCP server**. That server exposes tools, resources, and prompts, allowing the AI to interact with them as needed.
+この構成では、**host**（Claude DesktopまたはCursor IDE）が**MCP client**を起動し、それが外部の**MCP server**に接続します。serverはtools、resources、promptsを公開し、AIが必要に応じてそれらと相互作用できるようにします。
 
-In short, the workflow operates as follows:
+要するに、ワークフローは次のように動作します。
 
-- The user sends a message like _"Fetch product info from this Amazon link."_
-- The MCP client checks for a registered tool that can handle that task
-- The client sends a structured request to the MCP server
-- The MCP server executes the appropriate action (e.g., launching a headless browser)
-- The server returns structured results to the MCP client
-- The client forwards the results to the LLM, which presents them to the user
+- ユーザーが _「このAmazonリンクの商品情報を取得して。」_ のようなメッセージを送信します
+- MCP clientが、そのタスクを処理できる登録済みtoolを確認します
+- clientが構造化されたリクエストをMCP serverへ送信します
+- MCP serverが適切なアクションを実行します（例: ヘッドレスブラウザを起動）
+- serverが構造化された結果をMCP clientへ返します
+- clientが結果をLLMへ渡し、LLMがユーザーに提示します
 
 ## Developing Your Own MCP Server
 
-Let's construct a Python MCP server to extract data from Amazon product pages.
+Amazonの商品ページからデータを抽出するPythonのMCP serverを構築しましょう。
 
 ![amazon-product-page-example](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/amazon-product-page-example.png)
 
-This server will offer two tools: one to download HTML and another to extract organized information. You'll interact with the server via an LLM client in Cursor or Claude Desktop.
+このserverは2つのtoolを提供します。1つはHTMLをダウンロードするため、もう1つは整理された情報を抽出するためのものです。CursorまたはClaude DesktopのLLMクライアントを介してserverとやり取りします。
 
 ### Step 1: Preparing Your Environment
 
-First, verify you have [Python 3](https://www.python.org/downloads/) installed. Then, create and activate a virtual environment:
+まず、[Python 3](https://www.python.org/downloads/)がインストールされていることを確認してください。次に、仮想環境を作成して有効化します。
 
 ```sh
 python -m venv mcp-amazon-scraper
@@ -97,7 +97,7 @@ source mcp-amazon-scraper/bin/activate
 .\mcp-amazon-scraper\Scripts\activate
 ```
 
-Install the necessary libraries: the [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk), [Playwright](https://playwright.dev/python/), and [LXML](https://lxml.de/).
+必要なライブラリ（[MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)、[Playwright](https://playwright.dev/python/)、[LXML](https://lxml.de/)）をインストールします。
 
 ```sh
 pip install mcp playwright lxml
@@ -105,17 +105,17 @@ pip install mcp playwright lxml
 python -m playwright install
 ```
 
-This installs:
+これにより次がインストールされます。
 
-- **mcp**: Python SDK for Model Context Protocol servers and clients that handles all the JSON-RPC communication details
-- **playwright**: Browser automation library that provides headless browser capabilities for rendering and scraping JavaScript-heavy websites
-- **lxml**: Fast XML/HTML parsing library that makes it easy to extract specific data elements from web pages using XPath queries
+- **mcp**: Model Context Protocolのserverおよびclient向けPython SDKで、JSON-RPC通信の詳細をすべて処理します
+- **playwright**: ブラウザ自動化ライブラリで、JavaScriptが多いWebサイトをレンダリングしてスクレイピングするためのヘッドレスブラウザ機能を提供します
+- **lxml**: 高速なXML/HTMLパースライブラリで、XPathクエリを使ってWebページから特定データ要素を簡単に抽出できます
 
-In short, the MCP Python SDK (`mcp`) handles all protocol details, letting you expose tools that Claude or Cursor can call via natural-language prompts. Playwright allows us to render web pages completely (including JavaScript content), and lxml gives us powerful HTML parsing capabilities.
+要するに、MCP Python SDK（`mcp`）がプロトコルの詳細をすべて処理するため、ClaudeやCursorが自然言語プロンプトから呼び出せるtoolを公開できます。PlaywrightはWebページ（JavaScriptコンテンツを含む）を完全にレンダリングでき、lxmlは強力なHTMLパース機能を提供します。
 
 ### Step 2: Starting the MCP Server
 
-Create a Python file named `amazon_scraper_mcp.py`. Begin by importing the required modules and initializing the `FastMCP` server:
+`amazon_scraper_mcp.py`という名前のPythonファイルを作成します。まず、必要なモジュールをインポートし、`FastMCP` serverを初期化します。
 
 ```python
 import os
@@ -133,11 +133,11 @@ mcp = FastMCP("Amazon Product Scraper")
 print("MCP Server Initialized: Amazon Product Scraper")
 ```
 
-This creates an instance of the MCP server. We'll now add tools to it.
+これでMCP serverのインスタンスが作成されます。次にtoolを追加します。
 
 ### Step 3: Implementing the `fetch_page` Tool
 
-This tool will take a URL as input, use Playwright to navigate to the page, wait for the content to load, download the HTML, and save it to our temporary file.
+このtoolはURLを入力として受け取り、Playwrightでページへ移動し、コンテンツのロードを待ち、HTMLをダウンロードして一時ファイルへ保存します。
 
 ```python
 @mcp.tool()
@@ -172,11 +172,11 @@ async def fetch_page(url: str) -> str:
         return error_message
 ```
 
-This asynchronous function uses Playwright to handle potential JavaScript rendering on Amazon pages. The `@mcp.tool()` decorator registers this function as a callable tool within our server.
+この非同期関数は、Amazonページで起こり得るJavaScriptレンダリングをPlaywrightで処理します。`@mcp.tool()`デコレーターにより、この関数はserver内で呼び出し可能なtoolとして登録されます。
 
 ### Step 4: Implementing the `extract_info` Tool
 
-This tool reads the HTML file saved by `fetch_page`, parses it using LXML and XPath selectors, and returns a dictionary containing the extracted product details.
+このtoolは、`fetch_page`が保存したHTMLファイルを読み込み、LXMLとXPathセレクターでパースし、抽出した商品詳細を含む辞書を返します。
 
 ```python
 def _extract_xpath(tree, xpath, default="N/A"):
@@ -299,11 +299,11 @@ def extract_info() -> dict:
         return {"error": error_message}
 ```
 
-This function uses LXML's `fromstring` to parse the HTML and robust XPath selectors to find the desired elements
+この関数は、LXMLの`fromstring`を使用してHTMLをパースし、堅牢なXPathセレクターで目的の要素を見つけます。
 
 ### Step 5: Running the Server
 
-Finally, add the following lines to the end of your `amazon_scraper_mcp.py` script to start the server using the `stdio` transport mechanism, which is standard for local MCP servers communicating with clients like Claude Desktop or Cursor.
+最後に、`amazon_scraper_mcp.py`スクリプトの末尾に次の行を追加して、`stdio`トランスポート機構でserverを起動します。これはClaude DesktopやCursorのようなclientと通信するローカルMCP serverの標準です。
 
 ```python
 if __name__ == "__main__":
@@ -487,17 +487,17 @@ if __name__ == "__main__":
 
 ## Connecting Your MCP Server
 
-Now that the server script is ready, let's connect it to MCP clients like Claude Desktop and Cursor.
+serverスクリプトの準備ができたので、Claude DesktopやCursorのようなMCP clientに接続しましょう。
 
 ### Setting Up with Claude Desktop
 
-**Step 1:** Open Claude Desktop.
+**Step 1:** Claude Desktopを開きます。
 
-**Step 2:** Navigate to `Settings` -> `Developer` -> `Edit Config`. This will open the `claude_desktop_config.json` file in your default text editor.
+**Step 2:** `Settings` -> `Developer` -> `Edit Config`に移動します。これにより、デフォルトのテキストエディターで`claude_desktop_config.json`ファイルが開きます。
 
 ![claude-desktop-settings-menu-navigation](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/claude-desktop-settings-menu-navigation.png)
 
-**Step 3:** Add an entry for your server under the `mcpServers` key. Make sure to replace the path in `args` with the absolute path to your `amazon_scraper_mcp.py` file.
+**Step 3:** `mcpServers`キー配下にserverのエントリを追加します。`args`のパスは、`amazon_scraper_mcp.py`ファイルへの絶対パスに置き換えてください。
 
 ```json
 {
@@ -510,54 +510,54 @@ Now that the server script is ready, let's connect it to MCP clients like Claude
 }
 ```
 
-**Step 4:** Save the `claude_desktop_config.json` file and completely close and reopen Claude Desktop for the changes to take effect.
+**Step 4:** `claude_desktop_config.json`ファイルを保存し、変更を反映するためにClaude Desktopを完全に終了して再起動します。
 
-**Step 5:** In Claude Desktop, you should now see a small tools icon (like a hammer 🔨) in the chat input area.
+**Step 5:** Claude Desktopのチャット入力エリアに、小さなtoolsアイコン（ハンマー🔨のようなもの）が表示されるはずです。
 
 ![claude-desktop-mcp-tools-icon-interface](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/claude-desktop-mcp-tools-icon-interface.png)
 
-**Step 6:** Clicking it should list your "Amazon Product Scraper" with its `fetch_page` and `extract_info` tools.
+**Step 6:** それをクリックすると、`fetch_page`と`extract_info`のtoolsを備えた「Amazon Product Scraper」が一覧に表示されるはずです。
 
 ![claude-available-mcp-tools-dialog-amazon-scraper](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/claude-available-mcp-tools-dialog-amazon-scraper.png)
 
-**Step 7:** Send a Prompt, for example: _"Get the current price, original price, and rating for this Amazon product: [https://www.amazon.com/dp/B09C13PZX7](https://www.amazon.com/dp/B09C13PZX7)"._
+**Step 7:** 例えば次のようなプロンプトを送信します: _"Get the current price, original price, and rating for this Amazon product: [https://www.amazon.com/dp/B09C13PZX7](https://www.amazon.com/dp/B09C13PZX7)"._
 
-**Step 8:** Claude will detect that this requires external tools and prompt you for permission to run `fetch_page` first and then `extract_info`. Click "Allow for this chat" for each tool.
+**Step 8:** Claudeは外部toolsが必要だと検知し、まず`fetch_page`、次に`extract_info`を実行する許可を求めます。各toolについて「Allow for this chat」をクリックします。
 
 ![mcp-permission-dialog-fetch-page-amazon-tool](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/mcp-permission-dialog-fetch-page-amazon-tool.png)
 
-**Step 9:** After granting permissions, the MCP server will execute the tools. Claude will then receive the structured data and present it in the chat.
+**Step 9:** 権限を付与すると、MCP serverがtoolsを実行します。その後Claudeは構造化データを受け取り、チャット内に提示します。
 
 ![claude-amazon-product-data-extraction-results](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/claude-amazon-product-data-extraction-results-2.png)
 
 ### Setting Up with Cursor
 
-The process for Cursor (an AI-first IDE) is similar.
+Cursor（AIファーストIDE）の手順も同様です。
 
-**Step 1:** Open Cursor.
+**Step 1:** Cursorを開きます。
 
-**Step 2:** Go to `Settings` ⚙️ and navigate the `MCP` section.
+**Step 2:** `Settings` ⚙️へ進み、`MCP`セクションに移動します。
 
 ![cursor-ide-add-new-global-mcp-server-settings](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/cursor-ide-add-new-global-mcp-server-settings.png)
 
-**Step 3:** Click "+Add a new global MCP Server". This will open the `mcp.json` configuration file. Add an entry for your server, again using the **absolute path** to your script.
+**Step 3:** 「+Add a new global MCP Server」をクリックします。これにより`mcp.json`設定ファイルが開きます。serverのエントリを追加し、ここでもスクリプトへの**絶対パス**を使用してください。
 
 ![cursor-mcp-json-configuration-file-amazon-scraper](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/cursor-mcp-json-configuration-file-amazon-scraper.png)
 
-**Step 4:** Save the `mcp.json` file and you should see your "amazon\_product\_scraper" listed, hopefully with a green dot indicating it's running and connected.
+**Step 4:** `mcp.json`ファイルを保存すると、「amazon\_product\_scraper」が一覧に表示され、起動・接続されていれば緑のドットが表示されるはずです。
 
 ![cursor-ide-configured-amazon-scraper-mcp-settings](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/cursor-ide-configured-amazon-scraper-mcp-settings.png)
 
-**Step 5:** Use Cursor's chat feature (`Cmd+l` or `Ctrl+l`).
+**Step 5:** Cursorのチャット機能（`Cmd+l`または`Ctrl+l`）を使用します。
 
-**Step 6:** Send a Prompt, for example: "_Extract all available product data from this Amazon URL: [https://www.amazon.com/dp/B09C13PZX7](https://www.amazon.com/dp/B09C13PZX7). Format the output as a structured JSON object"._
+**Step 6:** 例えば次のようなプロンプトを送信します: "_Extract all available product data from this Amazon URL: [https://www.amazon.com/dp/B09C13PZX7](https://www.amazon.com/dp/B09C13PZX7). Format the output as a structured JSON object"_.
 
-**Step 7:** Similar to Claude Desktop, the Cursor will ask for permission to run the `fetch_page` and `extract_info` tools. Approve these requests ("Run Tool").
+**Step 7:** Claude Desktopと同様に、Cursorは`fetch_page`と`extract_info`を実行する権限を求めます。これらのリクエスト（「Run Tool」）を承認します。
 
-**Step 8:** The Cursor will display the interaction flow, showing the calls to your MCP tools and finally presenting the structured JSON data returned by your `extract_info` tool.
+**Step 8:** Cursorは対話フローを表示し、MCP toolsの呼び出し、最後に`extract_info` toolが返した構造化JSONデータを提示します。
 
 ![cursor-ide-amazon-product-data-extraction-json-results](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/cursor-ide-amazon-product-data-extraction-json-results.png)
-Here's an example of JSON output from Cursor:
+以下はCursorからのJSON出力例です。
 
 ```json
 {
@@ -580,38 +580,38 @@ Here's an example of JSON output from Cursor:
 }
 ```
 
-This shows the flexibility of MCP – the same server works seamlessly with different client applications.
+これはMCPの柔軟性を示しています。同じserverが、異なるclientアプリケーションでもシームレスに動作します。
 
 ## Using Bright Data's MCP for Professional Web Data Extraction
 
-Bright Data’s enterprise-grade [Model Context Protocol (MCP)](https://github.com/luminati-io/brightdata-mcp) solution eliminates the complexities of self-managed MCP servers—such as proxy management, [anti-bot navigation](https://brightdata.com/blog/web-data/anti-scraping-techniques), and scaling challenges—offering seamless integration with [AI agents](https://brightdata.com/use-cases/apps-agents) and LLMs.
+Bright Dataのエンタープライズグレードの[Model Context Protocol（MCP）](https://github.com/luminati-io/brightdata-mcp)ソリューションは、自己管理のMCP serverに伴う複雑さ（プロキシ管理、[アンチボット回避のナビゲーション](https://brightdata.jp/blog/web-data/anti-scraping-techniques)、スケーリングの課題など）を解消し、[AI agents](https://brightdata.jp/use-cases/apps-agents)およびLLMとのシームレスな統合を提供します。
 
-Connecting to Bright Data’s MCP enables immediate access to public web data, including SERP results and hard-to-reach sites, optimized for AI workflows.
+Bright DataのMCPに接続すると、SERP結果や到達が難しいサイトを含むパブリックWebデータへ即時アクセスでき、AIワークフロー向けに最適化されます。
 
-MCP unlocks a powerful web extraction framework with tools like the [Web Unlocker](https://brightdata.com/products/web-unlocker), [SERP API](https://brightdata.com/products/serp-api), [Web Scraper API](https://brightdata.com/products/web-scraper), and [Scraping Browser](https://brightdata.com/products/scraping-browser), delivering:
+MCPは、[Web Unlocker](https://brightdata.jp/products/web-unlocker)、[SERP API](https://brightdata.jp/products/serp-api)、[Web Scraper API](https://brightdata.jp/products/web-scraper)、[Scraping Browser](https://brightdata.jp/products/scraping-browser)などのツールによって強力なWeb抽出フレームワークを解放し、次を提供します。
 
-- **[AI-Ready Data](https://brightdata.com/use-cases/data-for-ai):** Pre-structured content, no preprocessing needed.
-- **Scalability & Reliability:** High-volume support without slowdowns.
-- **Block & CAPTCHA Bypass:** Advanced anti-bot capabilities.
-- **Global IP Coverage:** Access from 195 countries with [Bright Data proxies](https://brightdata.com/proxy-types).
-- **Seamless Integration:** Quick setup with any MCP client.
+- **[AI-Ready Data](https://brightdata.jp/use-cases/data-for-ai):** 事前に構造化されたコンテンツで、前処理は不要です。
+- **スケーラビリティと信頼性:** 高ボリュームでも速度低下なく対応します。
+- **ブロックおよびCAPTCHA回避:** 高度なアンチボット機能です。
+- **グローバルIPカバレッジ:** [Bright Data proxies](https://brightdata.jp/proxy-types)で195か国からアクセス可能です。
+- **シームレスな統合:** どのMCP clientでも迅速にセットアップできます。
 
 ### Prerequisites for Bright Data MCP
 
-Before starting your Bright Data MCP integration, verify you have the following:
+Bright DataのMCP統合を開始する前に、以下が揃っていることを確認してください。
 
-1. **Bright Data Account:** Register at [brightdata.com](https://brightdata.com/). First-time users receive complimentary credits for testing.
-2. **API Token:** Secure your API token from your Bright Data account settings ([User Settings Page](https://brightdata.com/cp/setting/users)).
-3. **Web Unlocker Zone:** [Establish a Web Unlocker proxy](https://docs.brightdata.com/scraping-automation/web-unlocker/quickstart) zone in your Bright Data control panel. Choose a memorable identifier, such as `mcp_unlocker` (this can be modified later via environment variables if necessary).
-4. **(Optional) Scraping Browser Zone:** If you require advanced browser automation features (e.g., for intricate JavaScript interactions or screenshots), [establish a Scraping Browser zone](https://docs.brightdata.com/scraping-automation/scraping-browser/quickstart). Record the authentication details (Username and Password) provided for this zone (within the **Overview** tab), typically formatted as `brd-customer-ACCOUNT_ID-zone-ZONE_NAME:PASSWORD`.
+1. **Bright Dataアカウント:** [brightdata.com](https://brightdata.jp/)で登録してください。初回ユーザーにはテスト用の無料クレジットが付与されます。
+2. **API Token:** Bright Dataアカウント設定からAPI tokenを安全に取得してください（[User Settings Page](https://brightdata.jp/cp/setting/users)）。
+3. **Web Unlocker Zone:** Bright Dataのコントロールパネルで[Web Unlocker proxy](https://docs.brightdata.com/scraping-automation/web-unlocker/quickstart) zoneを作成してください。`mcp_unlocker`のような覚えやすい識別子を選びます（必要に応じて、後で環境変数で変更できます）。
+4. **(Optional) Scraping Browser Zone:** 高度なブラウザ自動化機能（例: 複雑なJavaScript操作やスクリーンショット）が必要な場合は、[Scraping Browser zone](https://docs.brightdata.com/scraping-automation/scraping-browser/quickstart)を作成してください。このzoneに提供される認証情報（UsernameとPassword。**Overview**タブ内）を控えておきます。一般的に`brd-customer-ACCOUNT_ID-zone-ZONE_NAME:PASSWORD`の形式です。
 
 ### Quickstart: Configuring Bright Data MCP for Claude Desktop
 
-**Step 1:** The Bright Data MCP server typically runs using `npx`, which comes bundled with Node.js. Install Node.js if needed from the [official website](https://nodejs.org/en/download).
+**Step 1:** Bright DataのMCP serverは通常`npx`で実行します（Node.jsに同梱）。必要に応じて[公式サイト](https://nodejs.org/en/download)からNode.jsをインストールしてください。
 
-**Step 2:** Open Claude Desktop -> `Settings` -> `Developer` -> `Edit Config` (`claude_desktop_config.json`).
+**Step 2:** Claude Desktop -> `Settings` -> `Developer` -> `Edit Config`（`claude_desktop_config.json`）を開きます。
 
-**Step 3:** Insert the Bright Data server configuration under `mcpServers`. Substitute placeholders with your actual credentials.
+**Step 3:** `mcpServers`配下にBright Data server設定を挿入します。プレースホルダーを実際の認証情報に置き換えてください。
 
 ```json
 {
@@ -630,23 +630,23 @@ Before starting your Bright Data MCP integration, verify you have the following:
 }
 ```
 
-**Step 4:** Save the configuration file and restart Claude Desktop.
+**Step 4:** 設定ファイルを保存し、Claude Desktopを再起動します。
 
-**Step 5:** Hover over the hammer icon (🔨) in Claude Desktop. You should now see multiple MCP tools available.
+**Step 5:** Claude Desktopのハンマーアイコン（🔨）にカーソルを合わせます。複数のMCP toolsが利用可能になっているはずです。
 
 ![claude-desktop-interface-with-mcp-tools-available](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/claude-desktop-interface-with-mcp-tools-available.png)
 
-Let's attempt to extract data from Zillow, a website known for potentially restricting scrapers. Prompt Claude with "_Extract key property data in JSON format from this Zillow URL: [https://www.zillow.com/apartments/arverne-ny/the-tides-at-arverne-by-the-sea/ChWHPZ/](https://www.zillow.com/apartments/arverne-ny/the-tides-at-arverne-by-the-sea/ChWHPZ/)_"
+スクレイパーを制限する可能性があることで知られるWebサイトであるZillowからデータを抽出してみましょう。Claudeに次のようにプロンプトを入力します: "_Extract key property data in JSON format from this Zillow URL: [https://www.zillow.com/apartments/arverne-ny/the-tides-at-arverne-by-the-sea/ChWHPZ/](https://www.zillow.com/apartments/arverne-ny/the-tides-at-arverne-by-the-sea/ChWHPZ/)_"
 
 ![bright-data-mcp-zillow-property-extraction-process](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/bright-data-mcp-zillow-property-extraction-process.png)
 
-Permit Claude to utilize the necessary Bright Data MCP tools. Bright Data's MCP server will manage the underlying complexities (proxy rotation, JavaScript rendering via Scraping Browser if required).
+必要なBright DataのMCP toolsをClaudeが利用することを許可してください。Bright DataのMCP serverが、基盤となる複雑さ（プロキシローテーション、必要に応じたScraping BrowserによるJavaScriptレンダリング）を管理します。
 
-Bright Data's server conducts the extraction and delivers structured data, which Claude presents.
+Bright Dataのserverが抽出を実施し、構造化データを返し、Claudeがそれを提示します。
 
 ![zillow-property-data-json-structure-bright-data-mcp](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/zillow-property-data-json-structure-bright-data-mcp.png)
 
-Here's a sample of the potential output:
+以下は想定される出力のサンプルです。
 
 ```json
 {
@@ -665,25 +665,25 @@ Here's a sample of the potential output:
 }
 ```
 
-**Another Example: Hacker News Headlines**
+**別の例: Hacker Newsの見出し**
 
-A more straightforward query: "_Give me the titles of the latest 5 news articles from Hacker News_".
+よりシンプルなクエリとして、次のように依頼します: "_Give me the titles of the latest 5 news articles from Hacker News_".
 
 ![hacker-news-latest-articles-mcp-extraction-results](https://github.com/luminati-io/web-scraping-with-mcp/blob/main/images/hacker-news-latest-articles-mcp-extraction-results.png)
 
-This demonstrates how Bright Data's MCP server simplifies accessing even dynamic or heavily secured web content directly within your AI workflow.
+これは、Bright DataのMCP serverが、動的なコンテンツや強固に保護されたWebコンテンツであっても、AIワークフロー内で直接アクセスすることをどのように簡素化するかを示しています。
 
 ## Further Reading
 
-Here is a curation of our earlier guides on AI and large language models (LLMs) for more in-depth knowledge:
+より深い知識のために、AIおよび大規模言語モデル（LLM）に関する過去のガイドを厳選してご紹介します。
 
-- [Top Sources for Finding LLM Training Data](https://brightdata.com/blog/web-data/llm-training-data)
-- [Web Scraping with LLaMA 3: Turn Any Website into Structured JSON](https://brightdata.com/blog/web-data/web-scraping-with-llama-3)
-- [Web Scraping With LangChain and Bright Data](https://brightdata.com/blog/web-data/web-scraping-with-langchain-and-bright-data)
-- [How To Create a RAG Chatbot With GPT-4o Using SERP Data](https://brightdata.com/blog/web-data/build-a-rag-chatbot)
+- [Top Sources for Finding LLM Training Data](https://brightdata.jp/blog/web-data/llm-training-data)
+- [Web Scraping with LLaMA 3: Turn Any Website into Structured JSON](https://brightdata.jp/blog/web-data/web-scraping-with-llama-3)
+- [Web Scraping With LangChain and Bright Data](https://brightdata.jp/blog/web-data/web-scraping-with-langchain-and-bright-data)
+- [How To Create a RAG Chatbot With GPT-4o Using SERP Data](https://brightdata.jp/blog/web-data/build-a-rag-chatbot)
 
 ## Conclusion
 
-Anthropic's Model Context Protocol represents a fundamental shift in how AI systems interact with the external world. You can construct custom MCP servers for specific tasks. Bright Data's MCP integration enhances this further by delivering enterprise-grade web scraping capabilities that evade anti-bot protections and supply [AI-ready structured data](https://brightdata.com/use-cases/data-for-ai).
+AnthropicのModel Context Protocolは、AIシステムが外部世界と相互作用する方法における根本的な転換点を示しています。特定タスク向けにカスタムMCP serverを構築できます。Bright DataのMCP統合はこれをさらに強化し、アンチボット保護を回避し、[AI-readyな構造化データ](https://brightdata.jp/use-cases/data-for-ai)を供給するエンタープライズグレードのWebスクレイピング機能を提供します。
 
-Register and try out [AI solutions](https://brightdata.com/ai) today for free!
+今すぐ[AI solutions](https://brightdata.jp/ai)に登録して、無料でお試しください！
